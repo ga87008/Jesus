@@ -128,21 +128,6 @@
     #skipNfc:hover {
       background: rgba(255,255,255,0.1);
     }
-     .audio-control {
-      margin-top: 20px;
-    }
-    .audio-control button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background-color: #4CAF50;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .audio-control button:hover {
-      background-color: #45a049;
-    }
   </style>
 </head>
 <body>
@@ -159,9 +144,6 @@
   <div class="verse-box" id="verseBox">
     <div id="verse" class="verse"></div>
     <div id="reference" class="reference"></div>
-    <div class="audio-control">
-      <button id="audioToggle">播放語音</button>
-    </div>
     <div class="share-buttons">
       <a href="#" id="share-line" target="_blank">分享到 LINE</a>
       <a href="#" id="share-fb" target="_blank">分享到 Facebook</a>
@@ -178,67 +160,7 @@
       const loader = document.getElementById('loader');
       const skipNfcBtn = document.getElementById('skipNfc');
       const isAndroid = /Android/i.test(navigator.userAgent);
-    });
 
-    // 語音控制邏輯
-    let synth = window.speechSynthesis;
-    let isSpeaking = false;
-    let currentUtterance = null;
-
-    function speak(text) {
-      if (synth.speaking) {
-        synth.cancel();
-      }
-      currentUtterance = new SpeechSynthesisUtterance(text);
-      currentUtterance.lang = 'zh-TW';
-      synth.speak(currentUtterance);
-    }
-
-    function stopSpeaking() {
-      if (synth.speaking) {
-        synth.cancel();
-      }
-    }
-
-    document.getElementById('audioToggle').addEventListener('click', function() {
-      if (isSpeaking) {
-        stopSpeaking();
-        this.textContent = '播放語音';
-        isSpeaking = false;
-      } else {
-        const verseText = document.getElementById('verse').textContent;
-        const refText = document.getElementById('reference').textContent;
-        speak(verseText + '。' + refText);
-        this.textContent = '停止語音';
-        isSpeaking = true;
-
-        currentUtterance.onend = () => {
-          document.getElementById('audioToggle').textContent = '播放語音';
-          isSpeaking = false;
-        };
-      }
-    });
-
-    // showVerse 函式中加入：顯示文字後自動更新語音按鈕狀態
-    function showVerse() {
-      const verseBox = document.getElementById('verseBox');
-      const verseElement = document.getElementById('verse');
-      const referenceElement = document.getElementById('reference');
-      const loader = document.getElementById('loader');
-      const index = getDailyIndex();
-      const verseData = verses[index];
-
-      verseElement.textContent = verseData.text;
-      referenceElement.textContent = verseData.ref;
-      verseBox.style.display = 'block';
-      loader.style.display = 'none';
-
-      // 重置語音播放狀態
-      stopSpeaking();
-      const btn = document.getElementById('audioToggle');
-      btn.textContent = '播放語音';
-      isSpeaking = false;
-    }
 
         // 完整的經文數據 (已驗證格式)
       const verses = [
