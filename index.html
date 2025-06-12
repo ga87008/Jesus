@@ -4,58 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>天父的話</title>
-  <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Noto Sans TC', sans-serif;
-      background: url(https://raw.githubusercontent.com/ga87008/Jesus/main/background.jpg.jpg) no-repeat center center fixed;
-      background-size: cover;
-      height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
+      background: url(https://raw.githubusercontent.com/ga87008/Jesus/main/background.jpg.jpg) no-repeat center center fixed;
+      background-size: cover;
+      backdrop-filter: brightness(0.9);
     }
-
-
     .verse-box {
-      background: rgba(255, 255, 255, 0.75);
+      background-color: rgba(255, 255, 255, 0.85);
       border-radius: 16px;
-      padding: 30px 20px;
+      padding: 24px;
       max-width: 90%;
       width: 600px;
       text-align: center;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      display: none;
     }
-.title {
-  font-family: 'Zhi Mang Xing', cursive;
-  font-size: 2.6rem;
-  color: #2f2f2f;
-  margin-bottom: 1.2rem;
-}
     .verse {
-      font-size: 2.2rem;
-      color: #2f2f2f;
-      margin-bottom: 1.2rem;
-      line-height: 1.6;
-    }
-
-    .reference {
       font-size: 1.4rem;
-      color: #4b4b4b;
+      color: #333;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      line-height: 1.7;
     }
-
-    @media (max-width: 480px) {
-      .verse {
-        font-size: 1.7rem;
-      }
-      .reference {
-        font-size: 1.2rem;
-      }
+    .reference {
+      font-size: 1.1rem;
+      color: #555;
+      font-style: italic;
+      margin-top: 20px;
+    }
     .loader {
       font-size: 1.2rem;
       color: #666;
@@ -146,10 +130,6 @@
     }
   </style>
 </head>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
-
 <body>
   <!-- 僅 Android 顯示的 NFC 面板 -->
   <div class="nfc-panel" id="nfcPanel">
@@ -162,7 +142,6 @@
   </div>
 
   <div class="verse-box" id="verseBox">
-     <div class="title">天父的話</div>
     <div id="verse" class="verse"></div>
     <div id="reference" class="reference"></div>
     <div class="share-buttons">
