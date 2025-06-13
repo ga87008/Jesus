@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>天父的話</title>
-  <link href="https://fonts.googleapis.com/css2?family=Long+Cang&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Iansui&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
@@ -14,7 +16,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: url(https://raw.githubusercontent.com/ga87008/Jesus/main/background.jpg.jpg) no-repeat center center fixed;
+      background: url(https://raw.githubusercontent.com/ga87008/rex123/refs/heads/main/background.jpg) no-repeat center center fixed;
       background-size: cover;
       backdrop-filter: brightness(0.9);
     }
@@ -27,20 +29,64 @@
       text-align: center;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
       display: none;
+      position: relative;
     }
     .verse {
-      font-size: 1.4rem;
+      font-family: 'Iansui', 'Noto Sans TC', cursive;
+      font-size: 1.5rem;
+      line-height: 1.8;
       color: #333;
-      margin-bottom: 16px;
-      white-space: pre-wrap;
-      line-height: 1.7;
-      font-family: 'Long Cang', cursive;
+      margin-bottom: 20px;
+      position: relative;
+      text-align: left;
+      white-space: pre-line;
+    }
+    .verse .salutation {
+      display: block;
+      margin-bottom: 0.5em;
+      text-align: left;
+    }
+    .verse .content {
+      display: block;
+      padding-left: 0;
+      text-indent: 0;
+      margin-left: 0;
+    }
+    .verse span.char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(10px);
+      background: linear-gradient(to bottom, #1a1a1a, #333);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.2));
+    }
+    @keyframes penStroke {
+      0% { 
+        opacity: 0;
+        transform: translateY(10px) scaleY(0.8);
+      }
+      50% {
+        opacity: 0.7;
+        transform: translateY(0) scaleY(1.1);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+      }
     }
     .reference {
       font-size: 1.1rem;
       color: #555;
       font-style: italic;
       margin-top: 20px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out forwards;
+      text-align: center;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
     }
     .loader {
       font-size: 1.2rem;
@@ -56,6 +102,8 @@
       justify-content: center;
       gap: 12px;
       flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out forwards;
     }
     .share-buttons a {
       background-color: #e0e0e0;
@@ -69,7 +117,26 @@
     .share-buttons a:hover {
       background-color: #d0d0d0;
     }
-
+    /* 朗讀按鈕樣式 */
+    .speak-button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+      z-index: 10;
+    }
+    .speak-button:hover {
+      opacity: 1;
+    }
+    .speak-button svg {
+      width: 24px;
+      height: 24px;
+    }
     /* Android NFC 掃描面板樣式 */
     .nfc-panel {
       display: none;
@@ -144,6 +211,11 @@
   </div>
 
   <div class="verse-box" id="verseBox">
+    <button class="speak-button" id="speakButton" title="朗讀經文">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#555">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+      </svg>
+    </button>
     <div id="verse" class="verse"></div>
     <div id="reference" class="reference"></div>
     <div class="share-buttons">
@@ -161,8 +233,9 @@
       const verseBox = document.getElementById('verseBox');
       const loader = document.getElementById('loader');
       const skipNfcBtn = document.getElementById('skipNfc');
+      const speakButton = document.getElementById('speakButton');
       const isAndroid = /Android/i.test(navigator.userAgent);
-
+      let currentUtterance = null;
 
         // 完整的經文數據 (已驗證格式)
       const verses = [
@@ -651,109 +724,166 @@
         return Math.abs(index) % verses.length;
       }
 
-      // Android NFC 功能 (修正版)
-      function initNFC() {
-        if (!isAndroid) {
-          showVerse();
-          return;
-        }
-
-        // 先檢查瀏覽器是否支持Web NFC
-        if (!('NDEFReader' in window)) {
-          nfcError.textContent = '請使用Chrome 89+瀏覽器以獲得NFC功能';
-          setTimeout(showVerse, 2000);
-          return;
-        }
-
-        const ndef = new NDEFReader();
-        let nfcTimeout;
-        let alreadyRead = false;
+      // 書信式排版處理
+      function formatLetterText(text) {
+        let salutation = '';
+        let content = text;
         
-        // 10秒超時處理
-        nfcTimeout = setTimeout(() => {
-          nfcError.textContent = '掃描超時，自動顯示經文';
-          showVerse();
-        }, 10000);
-
-        ndef.scan()
-          .then(() => {
-            console.log("NFC掃描已啟動，等待標籤...");
-            
-            ndef.addEventListener('reading', ({ message }) => {
-              if (alreadyRead) return;
-              alreadyRead = true;
-              
-              clearTimeout(nfcTimeout);
-              console.log("NFC標籤已讀取", message);
-              showVerse();
-              
-              // 自動關閉NFC連接
-              setTimeout(() => {
-                try { 
-                  ndef.stop().then(() => console.log("NFC掃描已停止"));
-                } catch(e) { 
-                  console.log("NFC停止錯誤:", e); 
-                }
-              }, 500);
-            });
-            
-            ndef.addEventListener('readingerror', (error) => {
-              console.error("讀取錯誤:", error);
-              clearTimeout(nfcTimeout);
-              nfcError.textContent = '讀取失敗，請重試';
-              setTimeout(showVerse, 2000);
-            });
-          })
-          .catch(err => {
-            console.error("NFC掃描啟動錯誤:", err);
-            clearTimeout(nfcTimeout);
-            
-            // 更詳細的錯誤處理
-            if (err.name === 'NotAllowedError') {
-              nfcError.textContent = '請允許NFC權限';
-            } else if (err.name === 'NotSupportedError') {
-              nfcError.textContent = '設備不支持NFC';
-            } else {
-              nfcError.textContent = 'NFC功能暫時不可用';
-            }
-            
-            setTimeout(showVerse, 1500);
-          });
+        if (text.startsWith('親愛的孩子，')) {
+          salutation = '親愛的孩子：';
+          content = text.slice(6);
+        } else if (text.startsWith('孩子，')) {
+          salutation = '孩子：';
+          content = text.slice(3);
+        } else if (text.startsWith('孩子：')) {
+          salutation = '孩子：';
+          content = text.slice(3);
+        }
+        
+        let formattedContent = content;
+        
+        return {
+          salutation: salutation,
+          content: formattedContent
+        };
       }
 
-      // 顯示經文 (修正分享功能)
+      // 鋼筆逐字動畫
+      function animateLetterWriting(element, text) {
+        element.innerHTML = '';
+        
+        const formatted = formatLetterText(text);
+        
+        if (formatted.salutation) {
+          const salutationDiv = document.createElement('div');
+          salutationDiv.className = 'salutation';
+          element.appendChild(salutationDiv);
+          
+          formatted.salutation.split('').forEach((char, index) => {
+            const span = document.createElement('span');
+            span.className = 'char';
+            span.textContent = char;
+            salutationDiv.appendChild(span);
+            
+            setTimeout(() => {
+              span.style.animation = 'penStroke 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+            }, index * 150);
+          });
+        }
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        element.appendChild(contentDiv);
+        
+        let charIndex = 0;
+        formatted.content.split('').forEach((char) => {
+          if (char === '\n') {
+            contentDiv.appendChild(document.createElement('br'));
+          } else {
+            const span = document.createElement('span');
+            span.className = 'char';
+            span.textContent = char;
+            contentDiv.appendChild(span);
+            
+            setTimeout(() => {
+              span.style.animation = 'penStroke 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+            }, (formatted.salutation ? formatted.salutation.length * 150 : 0) + (charIndex * 150));
+            
+            charIndex++;
+          }
+        });
+      }
+
+      // 朗讀經文
+      function speakText() {
+        if (currentUtterance) {
+          window.speechSynthesis.cancel();
+        }
+
+        const verseElement = document.getElementById('verse');
+        const refElement = document.getElementById('reference');
+        const fullText = verseElement.textContent + '\n' + refElement.textContent;
+
+        currentUtterance = new SpeechSynthesisUtterance(fullText);
+        currentUtterance.lang = 'zh-TW';
+        currentUtterance.rate = 0.9;
+        currentUtterance.pitch = 0.95;
+        
+        const voices = window.speechSynthesis.getVoices();
+        const chineseVoice = voices.find(voice => 
+          voice.lang === 'zh-TW' || voice.lang === 'zh-CN'
+        );
+        
+        if (chineseVoice) {
+          currentUtterance.voice = chineseVoice;
+        }
+
+        window.speechSynthesis.speak(currentUtterance);
+
+        currentUtterance.onend = function() {
+          currentUtterance = null;
+          speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#555"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        };
+
+        speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e74c3c"><path d="M6 7l8-5v20l-8-5v-10zm-6 10h4v-10h-4v10zm20.264-13.264l-1.497 1.497c1.847 1.783 2.983 4.157 2.983 6.767 0 2.61-1.135 4.984-2.983 6.766l1.498 1.498c2.305-2.153 3.735-5.055 3.735-8.264s-1.43-6.11-3.736-8.264zm-.489 8.264c0-2.084-.915-3.967-2.384-5.391l-1.503 1.503c1.011 0.99 1.636 2.25 1.636 3.888 0 1.639-0.625 2.899-1.636 3.889l1.503 1.503c1.469-1.424 2.384-3.306 2.384-5.392z"/></svg>`;
+      }
+
+      // 停止朗讀
+      function stopSpeaking() {
+        window.speechSynthesis.cancel();
+        currentUtterance = null;
+        speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#555"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+      }
+
+      // 點擊喇叭按鈕事件
+      speakButton.addEventListener('click', function() {
+        if (currentUtterance && window.speechSynthesis.speaking) {
+          stopSpeaking();
+        } else {
+          speakText();
+        }
+      });
+
+      // 顯示經文
       function showVerse() {
         try {
+          stopSpeaking(); // 顯示新經文時停止當前朗讀
+          
           if (nfcPanel) nfcPanel.style.display = 'none';
           loader.style.display = 'block';
           verseBox.style.display = 'none';
 
           const index = getDailyIndex();
-          const verseText = verses[index].text;
-          const verseRef = verses[index].ref;
+          const verseElement = document.getElementById('verse');
+          const refElement = document.getElementById('reference');
           
-          document.getElementById('verse').textContent = verseText;
-          document.getElementById('reference').textContent = verseRef;
+          verseElement.innerHTML = '';
+          refElement.textContent = '';
+          refElement.style.opacity = '0';
           
-          // 只分享經文內容，不包含連結
-          const shareContent = encodeURIComponent(`${verseText}\n\n——${verseRef}`);
-          
-          // LINE分享
+          const shareText = encodeURIComponent(
+            `${verses[index].text}\n\n——${verses[index].ref}`
+          );
           document.getElementById('share-line').href = 
-            `https://line.me/R/msg/text/?${shareContent}`;
-            
-          // Facebook分享
+            `https://line.me/R/msg/text/?${shareText}`;
           document.getElementById('share-fb').href = 
-            `https://www.facebook.com/sharer/sharer.php?quote=${shareContent}`;
+            `https://www.facebook.com/sharer/sharer.php?quote=${shareText}`;
 
-          // 短暫顯示載入效果
           setTimeout(() => {
             loader.style.display = 'none';
             verseBox.style.display = 'block';
+            animateLetterWriting(verseElement, verses[index].text);
+            
+            setTimeout(() => {
+              refElement.textContent = verses[index].ref;
+              refElement.style.animation = 'fadeIn 0.5s ease-out forwards';
+              document.querySelector('.share-buttons').style.animation = 'fadeIn 0.5s ease-out forwards';
+            }, (verses[index].text.length * 150) + 1000);
           }, 300);
         } catch (error) {
           console.error("顯示經文時出錯:", error);
           loader.textContent = "載入失敗，請刷新頁面";
+          verseBox.style.display = 'none';
         }
       }
 
@@ -763,14 +893,11 @@
       // 初始化
       if (isAndroid) {
         try {
-          // 檢查是否真的支持NFC
           if ('NDEFReader' in window) {
             initNFC();
             nfcPanel.style.display = 'flex';
             verseBox.style.display = 'none';
           } else {
-            // 如果不支持NFC，直接顯示經文
-            console.log("設備不支持Web NFC");
             showVerse();
           }
         } catch (err) {
@@ -779,7 +906,64 @@
           setTimeout(showVerse, 1500);
         }
       } else {
-        showVerse(); // 非Android直接顯示
+        showVerse();
+      }
+
+      // Android NFC 功能
+      function initNFC() {
+        if (!isAndroid) {
+          showVerse();
+          return;
+        }
+
+        if (!('NDEFReader' in window)) {
+          nfcError.textContent = '請使用Chrome瀏覽器以獲得NFC功能';
+          setTimeout(showVerse, 2000);
+          return;
+        }
+
+        const ndef = new NDEFReader();
+        let nfcTimeout;
+        let alreadyRead = false;
+        
+        nfcTimeout = setTimeout(() => {
+          nfcError.textContent = '掃描超時，自動顯示經文';
+          showVerse();
+        }, 10000);
+
+        ndef.scan()
+          .then(() => {
+            ndef.addEventListener('reading', ({ message }) => {
+              if (alreadyRead) return;
+              alreadyRead = true;
+              
+              clearTimeout(nfcTimeout);
+              showVerse();
+              
+              setTimeout(() => {
+                try { ndef.stop(); } catch(e) { console.log("NFC正常結束"); }
+              }, 500);
+            });
+            
+            ndef.addEventListener('readingerror', () => {
+              clearTimeout(nfcTimeout);
+              nfcError.textContent = '讀取失敗，請重試';
+              setTimeout(showVerse, 2000);
+            });
+          })
+          .catch(err => {
+            clearTimeout(nfcTimeout);
+            console.error("NFC錯誤:", err);
+            nfcError.textContent = 'NFC功能不可用';
+            setTimeout(showVerse, 1500);
+          });
+      }
+
+      // 初始化語音合成
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = function() {
+          // 語音列表加載完成
+        };
       }
     });
   </script>
