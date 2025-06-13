@@ -16,7 +16,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: url(https://raw.githubusercontent.com/ga87008/rex123/refs/heads/main/background.jpg) no-repeat center center fixed;
+      background: url(https://raw.githubusercontent.com/ga87008/rex123/refs/heads/main/background.jpg.jpg) no-repeat center center fixed;
       background-size: cover;
       backdrop-filter: brightness(0.9);
     }
@@ -137,6 +137,14 @@
       width: 24px;
       height: 24px;
     }
+    .speaking {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
     /* Android NFC 掃描面板樣式 */
     .nfc-panel {
       display: none;
@@ -236,6 +244,7 @@
       const speakButton = document.getElementById('speakButton');
       const isAndroid = /Android/i.test(navigator.userAgent);
       let currentUtterance = null;
+
 
         // 完整的經文數據 (已驗證格式)
       const verses = [
@@ -690,7 +699,7 @@
   }
       ];
 
-     // 設備指紋生成
+    // 設備指紋生成
       function getDeviceFingerprint() {
         const keys = [
           navigator.platform,
@@ -794,44 +803,85 @@
         });
       }
 
-      // 朗讀經文
+      // 優化的朗讀功能
       function speakText() {
+        // 停止當前朗讀
         if (currentUtterance) {
           window.speechSynthesis.cancel();
         }
 
-        const verseElement = document.getElementById('verse');
-        const refElement = document.getElementById('reference');
-        const fullText = verseElement.textContent + '\n' + refElement.textContent;
-
-        currentUtterance = new SpeechSynthesisUtterance(fullText);
-        currentUtterance.lang = 'zh-TW';
-        currentUtterance.rate = 0.9;
-        currentUtterance.pitch = 0.95;
+        // 獲取要朗讀的內容（確保只朗讀經文和出處）
+        const verseText = document.getElementById('verse').textContent;
+        const refText = document.getElementById('reference').textContent;
         
+        // 確保朗讀內容完整
+        let fullText = verseText;
+        if (refText) {
+          fullText += ' ' + refText; // 用空格連接而不是換行
+        }
+
+        // 創建語音實例
+        currentUtterance = new SpeechSynthesisUtterance(fullText);
+        
+        // 優化語音參數（更溫和慈祥的聲音）
+        currentUtterance.lang = 'zh-TW';
+        currentUtterance.rate = 0.82; // 更慢的語速
+        currentUtterance.pitch = 0.88; // 更低的音調
+        currentUtterance.volume = 1; // 最大音量
+        
+        // 嘗試設置最佳中文語音（優先選擇男性聲音）
         const voices = window.speechSynthesis.getVoices();
+        const preferredVoices = [
+          'Microsoft Zhiwei Online (Natural) - Chinese (Taiwan)',
+          'Google 國語（臺灣）',
+          'Microsoft Yaoyao Online (Natural) - Chinese (Taiwan)',
+          'Mei-Jia'
+        ];
+        
+        // 尋找最佳語音
         const chineseVoice = voices.find(voice => 
-          voice.lang === 'zh-TW' || voice.lang === 'zh-CN'
+          preferredVoices.includes(voice.name) || 
+          (voice.lang === 'zh-TW' && voice.name.includes('Natural'))
         );
         
         if (chineseVoice) {
           currentUtterance.voice = chineseVoice;
+          console.log('使用語音:', chineseVoice.name);
+        } else if (voices.length > 0) {
+          // 使用第一個可用的中文語音
+          const fallbackVoice = voices.find(voice => voice.lang === 'zh-TW' || voice.lang === 'zh-CN');
+          if (fallbackVoice) currentUtterance.voice = fallbackVoice;
         }
 
+        // 朗讀
         window.speechSynthesis.speak(currentUtterance);
 
+        // 更新按鈕狀態
+        speakButton.classList.add('speaking');
+        speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e74c3c"><path d="M6 7l8-5v20l-8-5v-10zm-6 10h4v-10h-4v10zm20.264-13.264l-1.497 1.497c1.847 1.783 2.983 4.157 2.983 6.767 0 2.61-1.135 4.984-2.983 6.766l1.498 1.498c2.305-2.153 3.735-5.055 3.735-8.264s-1.43-6.11-3.736-8.264zm-.489 8.264c0-2.084-.915-3.967-2.384-5.391l-1.503 1.503c1.011 0.99 1.636 2.25 1.636 3.888 0 1.639-0.625 2.899-1.636 3.889l1.503 1.503c1.469-1.424 2.384-3.306 2.384-5.392z"/></svg>`;
+
+        // 朗讀結束時恢復按鈕
         currentUtterance.onend = function() {
           currentUtterance = null;
+          speakButton.classList.remove('speaking');
           speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#555"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         };
 
-        speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e74c3c"><path d="M6 7l8-5v20l-8-5v-10zm-6 10h4v-10h-4v10zm20.264-13.264l-1.497 1.497c1.847 1.783 2.983 4.157 2.983 6.767 0 2.61-1.135 4.984-2.983 6.766l1.498 1.498c2.305-2.153 3.735-5.055 3.735-8.264s-1.43-6.11-3.736-8.264zm-.489 8.264c0-2.084-.915-3.967-2.384-5.391l-1.503 1.503c1.011 0.99 1.636 2.25 1.636 3.888 0 1.639-0.625 2.899-1.636 3.889l1.503 1.503c1.469-1.424 2.384-3.306 2.384-5.392z"/></svg>`;
+        currentUtterance.onerror = function(event) {
+          console.error('朗讀錯誤:', event);
+          speakButton.classList.remove('speaking');
+          speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#555"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        };
       }
 
       // 停止朗讀
       function stopSpeaking() {
         window.speechSynthesis.cancel();
-        currentUtterance = null;
+        if (currentUtterance) {
+          currentUtterance.onend = null; // 防止觸發 onend 事件
+          currentUtterance = null;
+        }
+        speakButton.classList.remove('speaking');
         speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#555"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
       }
 
@@ -840,7 +890,11 @@
         if (currentUtterance && window.speechSynthesis.speaking) {
           stopSpeaking();
         } else {
-          speakText();
+          // 確保經文已完全載入再朗讀
+          if (document.getElementById('verse').textContent && 
+              document.getElementById('reference').textContent) {
+            speakText();
+          }
         }
       });
 
@@ -960,11 +1014,24 @@
       }
 
       // 初始化語音合成
-      if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = function() {
-          // 語音列表加載完成
-        };
+      function loadVoices() {
+        return new Promise(resolve => {
+          let voices = window.speechSynthesis.getVoices();
+          if (voices.length > 0) {
+            resolve(voices);
+          } else {
+            speechSynthesis.onvoiceschanged = function() {
+              voices = window.speechSynthesis.getVoices();
+              resolve(voices);
+            };
+          }
+        });
       }
+
+      // 頁面載入時預載語音
+      loadVoices().then(voices => {
+        console.log('可用語音:', voices.map(v => v.name + ' (' + v.lang + ')'));
+      });
     });
   </script>
 </body>
