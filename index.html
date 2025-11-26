@@ -949,13 +949,13 @@
         let nfcTimeout;
         let alreadyRead = false;
 
-        // 設定超時自動顯示（修正：縮短超時時間）
+        // 設定超時自動顯示（縮短為 3 秒）
         nfcTimeout = setTimeout(() => {
           if (!alreadyRead) {
             nfcError.textContent = '⏱️ 掃描超時，自動顯示經文';
             setTimeout(showVerse, 1000);
           }
-        }, 8000); // 從 10 秒改為 8 秒
+        }, 3000);
 
         ndef.scan()
           .then(() => {
@@ -997,23 +997,44 @@
           });
       }
 
+      // 檢測是否由 NFC 標籤直接啟動（Android 特有行為）
+      function isLaunchedByNFC() {
+        // Android 通過 NFC 標籤啟動時,通常沒有 referrer
+        // 且是直接導航(非刷新、非後退)
+        const hasNoReferrer = !document.referrer || document.referrer === '';
+        const isDirectNavigation = window.performance &&
+          (window.performance.navigation.type === 0 ||
+            window.performance.getEntriesByType('navigation')[0]?.type === 'navigate');
+
+        // 如果是 Android 且沒有 referrer 且是直接導航,很可能是 NFC 啟動
+        return isAndroid && hasNoReferrer && isDirectNavigation;
+      }
+
       // 初始化邏輯
       if (isAndroid) {
-        try {
-          if ('NDEFReader' in window) {
-            nfcPanel.style.display = 'flex';
-            verseBox.style.display = 'none';
-            initNFC();
-          } else {
-            // 不支援 NFC，直接顯示經文
+        // 檢測是否由 NFC 標籤直接啟動
+        if (isLaunchedByNFC()) {
+          console.log('檢測到可能由 NFC 標籤啟動,直接顯示經文');
+          // 直接顯示經文,不顯示 NFC 掃描畫面
+          showVerse();
+        } else {
+          // 手動打開網頁,顯示 NFC 掃描介面
+          try {
+            if ('NDEFReader' in window) {
+              nfcPanel.style.display = 'flex';
+              verseBox.style.display = 'none';
+              initNFC();
+            } else {
+              // 不支援 NFC,直接顯示經文
+              showVerse();
+            }
+          } catch (err) {
+            console.warn("NFC 初始化失敗:", err);
             showVerse();
           }
-        } catch (err) {
-          console.warn("NFC 初始化失敗:", err);
-          showVerse();
         }
       } else {
-        // 非 Android 裝置，直接顯示經文
+        // 非 Android 裝置,直接顯示經文
         showVerse();
       }
 
