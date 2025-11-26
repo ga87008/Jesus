@@ -18,6 +18,40 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --bg-overlay: rgba(0, 0, 0, 0);
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      --text-primary: #2d3748;
+      --text-secondary: #718096;
+      --text-tertiary: #4a5568;
+      --border-color: #e2e8f0;
+      --accent-color: #667eea;
+      --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --button-hover-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      --review-bg: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      --loader-color: white;
+      --favorite-color: #f56565;
+      --favorite-active: #fc8181;
+    }
+
+    [data-theme="dark"] {
+      --bg-overlay: rgba(0, 0, 0, 0.5);
+      --card-bg: rgba(30, 30, 40, 0.95);
+      --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      --text-primary: #e2e8f0;
+      --text-secondary: #a0aec0;
+      --text-tertiary: #cbd5e0;
+      --border-color: #4a5568;
+      --accent-color: #7c3aed;
+      --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+      --button-hover-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+      --review-bg: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      --loader-color: #e2e8f0;
+      --favorite-color: #fc8181;
+      --favorite-active: #f56565;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -28,9 +62,10 @@
       min-height: 100vh;
       position: relative;
       overflow-x: hidden;
+      transition: background 0.3s ease;
     }
 
-    /* 背景圖片 - 完全顯示,無遮罩 */
+    /* 背景圖片 */
     body::before {
       content: '';
       position: fixed;
@@ -43,20 +78,86 @@
       z-index: 0;
     }
 
+    /* 深色模式遮罩 */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-overlay);
+      z-index: 0;
+      transition: background 0.3s ease;
+    }
+
+    /* 頂部工具列 */
+    .toolbar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .toolbar-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      position: relative;
+    }
+
+    .toolbar-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .toolbar-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 統計徽章 */
+    .stats-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--accent-gradient);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
     .verse-box {
-      background: rgba(255, 255, 255, 0.98);
+      background: var(--card-bg);
       backdrop-filter: blur(20px);
       border-radius: 24px;
       padding: 32px 28px;
       max-width: 90%;
       width: 640px;
       text-align: center;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+      box-shadow: var(--card-shadow);
       display: none;
       position: relative;
       z-index: 10;
       animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
     }
 
     @keyframes slideUp {
@@ -76,23 +177,66 @@
       content: '✨ 今日的話 ✨';
       display: block;
       font-size: 0.9rem;
-      color: #667eea;
+      color: var(--accent-color);
       font-weight: 500;
       letter-spacing: 2px;
       margin-bottom: 16px;
       opacity: 0.8;
     }
 
+    /* 收藏按鈕 */
+    .favorite-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      z-index: 20;
+    }
+
+    .favorite-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .favorite-btn.active {
+      animation: heartBeat 0.5s ease;
+    }
+
+    @keyframes heartBeat {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      25% {
+        transform: scale(1.3);
+      }
+
+      50% {
+        transform: scale(1.1);
+      }
+
+      75% {
+        transform: scale(1.25);
+      }
+    }
+
     .verse {
       font-family: 'Iansui', 'Noto Sans TC', serif;
       font-size: 1.4rem;
       line-height: 2;
-      color: #2d3748;
+      color: var(--text-primary);
       margin-bottom: 24px;
       position: relative;
       text-align: left;
       white-space: pre-line;
       font-weight: 400;
+      transition: color 0.3s ease;
     }
 
     .verse .salutation {
@@ -100,7 +244,8 @@
       margin-bottom: 0.8em;
       text-align: left;
       font-weight: 500;
-      color: #4a5568;
+      color: var(--text-tertiary);
+      transition: color 0.3s ease;
     }
 
     .verse .content {
@@ -114,7 +259,7 @@
       display: inline-block;
       opacity: 0;
       transform: translateY(10px);
-      background: linear-gradient(to bottom, #1a202c, #2d3748);
+      background: linear-gradient(to bottom, var(--text-primary), var(--text-tertiary));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -140,15 +285,16 @@
 
     .reference {
       font-size: 1rem;
-      color: #718096;
+      color: var(--text-secondary);
       font-style: italic;
       margin-top: 24px;
       padding-top: 20px;
-      border-top: 2px solid #e2e8f0;
+      border-top: 2px solid var(--border-color);
       opacity: 0;
       animation: fadeIn 0.5s ease-out forwards;
       text-align: center;
       font-weight: 500;
+      transition: color 0.3s ease, border-color 0.3s ease;
     }
 
     @keyframes fadeIn {
@@ -159,7 +305,7 @@
 
     .loader {
       font-size: 1.3rem;
-      color: white;
+      color: var(--loader-color);
       position: fixed;
       top: 50%;
       left: 50%;
@@ -204,7 +350,7 @@
 
     .share-buttons a,
     .share-buttons button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--accent-gradient);
       color: white;
       padding: 12px 20px;
       border-radius: 12px;
@@ -220,7 +366,7 @@
     .share-buttons a:hover,
     .share-buttons button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      box-shadow: var(--button-hover-shadow);
     }
 
     .share-buttons a:active,
@@ -228,7 +374,7 @@
       transform: translateY(0);
     }
 
-    /* NFC 掃描面板優化 */
+    /* NFC 掃描面板 */
     .nfc-panel {
       display: none;
       position: fixed;
@@ -252,7 +398,6 @@
       margin-bottom: 30px;
     }
 
-    /* NFC 波紋效果 */
     .nfc-ripple {
       position: absolute;
       top: 50%;
@@ -350,8 +495,8 @@
       transform: translateY(-2px);
     }
 
-    /* 本週回顧面板優化 */
-    .review-panel {
+    /* 統一的面板樣式 */
+    .panel {
       position: fixed;
       left: 50%;
       top: 50%;
@@ -360,32 +505,110 @@
       max-width: 720px;
       max-height: 85vh;
       overflow-y: auto;
-      background: rgba(255, 255, 255, 0.98);
+      background: var(--card-bg);
       backdrop-filter: blur(20px);
       border-radius: 20px;
       padding: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--card-shadow);
       display: none;
       z-index: 2000;
       animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .review-panel h3 {
+    .panel h3 {
       margin: 0 0 20px 0;
       font-size: 1.4rem;
-      color: #2d3748;
+      color: var(--text-primary);
       font-weight: 600;
-      border-bottom: 2px solid #667eea;
+      border-bottom: 2px solid var(--accent-color);
       padding-bottom: 12px;
+      transition: color 0.3s ease;
+    }
+
+    /* 統計面板特殊樣式 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--review-bg);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .stat-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    /* 收藏項目樣式 */
+    .favorite-item {
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--review-bg);
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .favorite-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .favorite-item .remove-favorite {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.3s;
+    }
+
+    .favorite-item .remove-favorite:hover {
+      opacity: 1;
+      transform: scale(1.2);
     }
 
     .review-item {
       padding: 16px;
       border-radius: 12px;
-      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      background: var(--review-bg);
       margin-bottom: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.3s;
     }
 
     .review-item:hover {
@@ -393,21 +616,25 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .review-meta {
+    .review-meta,
+    .favorite-meta {
       font-size: 0.85rem;
-      color: #718096;
+      color: var(--text-secondary);
       margin-bottom: 8px;
       font-weight: 500;
+      transition: color 0.3s ease;
     }
 
-    .review-text {
+    .review-text,
+    .favorite-text {
       white-space: pre-wrap;
-      color: #2d3748;
+      color: var(--text-primary);
       line-height: 1.7;
       font-size: 0.95rem;
+      transition: color 0.3s ease;
     }
 
-    .review-actions {
+    .panel-actions {
       display: flex;
       gap: 10px;
       margin-top: 20px;
@@ -418,7 +645,7 @@
     .small-btn {
       padding: 10px 16px;
       font-size: 0.9rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--accent-gradient);
       color: white;
       border: none;
       border-radius: 10px;
@@ -430,11 +657,23 @@
 
     .small-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: var(--button-hover-shadow);
     }
 
     /* 響應式設計 */
     @media (max-width: 640px) {
+      .toolbar {
+        top: 12px;
+        right: 12px;
+        gap: 8px;
+      }
+
+      .toolbar-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+      }
+
       .verse-box {
         padding: 24px 20px;
         border-radius: 20px;
@@ -454,40 +693,44 @@
         width: 100%;
       }
 
-      .review-panel {
+      .panel {
         width: calc(100% - 24px);
         padding: 20px;
       }
 
-      .review-actions {
+      .panel-actions {
         flex-direction: column;
       }
 
       .small-btn {
         width: 100%;
       }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* 滾動條美化 */
-    .review-panel::-webkit-scrollbar {
+    .panel::-webkit-scrollbar {
       width: 8px;
     }
 
-    .review-panel::-webkit-scrollbar-track {
-      background: #f1f1f1;
+    .panel::-webkit-scrollbar-track {
+      background: var(--border-color);
       border-radius: 10px;
     }
 
-    .review-panel::-webkit-scrollbar-thumb {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .panel::-webkit-scrollbar-thumb {
+      background: var(--accent-gradient);
       border-radius: 10px;
     }
 
-    .review-panel::-webkit-scrollbar-thumb:hover {
+    .panel::-webkit-scrollbar-thumb:hover {
       background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
     }
 
-    /* 複製成功提示 */
+    /* Toast 提示 */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -509,11 +752,46 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* 空狀態提示 */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
   </style>
 </head>
 
 <body>
-  <!-- Android NFC 掃描面板 -->
+  <!-- 頂部工具列 -->
+  <div class="toolbar">
+    <button class="toolbar-btn" id="themeToggle" title="切換深色/淺色模式">
+      <span id="themeIcon">🌙</span>
+    </button>
+    <button class="toolbar-btn" id="statsBtn" title="閱讀統計">
+      📊
+      <span class="stats-badge" id="streakBadge">0</span>
+    </button>
+    <button class="toolbar-btn" id="favoritesBtn" title="我的收藏">
+      ⭐
+    </button>
+    <button class="toolbar-btn" id="openReview" title="本週回顧">
+      📖
+    </button>
+  </div>
+
+  <!-- NFC 掃描面板 -->
   <div class="nfc-panel" id="nfcPanel">
     <div class="nfc-animation">
       <div class="nfc-ripple"></div>
@@ -528,24 +806,59 @@
 
   <!-- 經文顯示區 -->
   <div class="verse-box" id="verseBox">
+    <button class="favorite-btn" id="favoriteBtn" title="收藏此經文">🤍</button>
     <div id="verse" class="verse"></div>
     <div id="reference" class="reference"></div>
     <div class="share-buttons">
       <a href="#" id="share-line" target="_blank">📱 分享到 LINE</a>
       <a href="#" id="share-fb" target="_blank">📘 分享到 Facebook</a>
       <button id="copyBtn">📋 複製經文</button>
-      <button id="openReview">📖 本週回顧</button>
     </div>
   </div>
 
   <!-- 載入提示 -->
   <div id="loader" class="loader">載入中</div>
 
+  <!-- 統計面板 -->
+  <div class="panel" id="statsPanel">
+    <h3>📊 閱讀統計</h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-number" id="streakDays">0</div>
+        <div class="stat-label">連續天數</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-number" id="totalDays">0</div>
+        <div class="stat-label">總閱讀天數</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-number" id="favoriteCount">0</div>
+        <div class="stat-label">收藏數量</div>
+      </div>
+    </div>
+    <div class="panel-actions">
+      <button class="small-btn" id="closeStats">✖️ 關閉</button>
+    </div>
+  </div>
+
+  <!-- 收藏面板 -->
+  <div class="panel" id="favoritesPanel">
+    <h3>⭐ 我的收藏</h3>
+    <div id="favoritesList"></div>
+    <div class="panel-actions">
+      <button class="small-btn" id="exportFavorites">💾 匯出收藏</button>
+      <button class="small-btn" id="closeFavorites">✖️ 關閉</button>
+    </div>
+  </div>
+
   <!-- 本週回顧面板 -->
-  <div class="review-panel" id="reviewPanel">
+  <div class="panel" id="reviewPanel">
     <h3>📖 本週回顧（最近 7 天）</h3>
     <div id="reviewList"></div>
-    <div class="review-actions">
+    <div class="panel-actions">
       <button class="small-btn" id="exportBtn">💾 匯出文字</button>
       <button class="small-btn" id="clearBtn">🗑️ 清除紀錄</button>
       <button class="small-btn" id="closeReview">✖️ 關閉</button>
@@ -567,21 +880,259 @@
       const skipNfcBtn = document.getElementById('skipNfc');
       const isAndroid = /Android/i.test(navigator.userAgent);
 
+      // 面板元素
+      const statsPanel = document.getElementById('statsPanel');
+      const favoritesPanel = document.getElementById('favoritesPanel');
       const reviewPanel = document.getElementById('reviewPanel');
-      const reviewList = document.getElementById('reviewList');
+
+      // 按鈕元素
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const statsBtn = document.getElementById('statsBtn');
+      const favoritesBtn = document.getElementById('favoritesBtn');
       const openReviewBtn = document.getElementById('openReview');
+      const favoriteBtn = document.getElementById('favoriteBtn');
+      const copyBtn = document.getElementById('copyBtn');
+
+      // 關閉按鈕
+      const closeStats = document.getElementById('closeStats');
+      const closeFavorites = document.getElementById('closeFavorites');
       const closeReviewBtn = document.getElementById('closeReview');
+
+      // 其他按鈕
       const clearBtn = document.getElementById('clearBtn');
       const exportBtn = document.getElementById('exportBtn');
-      const copyBtn = document.getElementById('copyBtn');
+      const exportFavorites = document.getElementById('exportFavorites');
+
       const toast = document.getElementById('toast');
 
+      // LocalStorage Keys
       const STORAGE_KEY = 'jp_history_v1';
       const TODAY_KEY = 'jp_today_index_v1';
+      const FAVORITES_KEY = 'jp_favorites_v1';
+      const STATS_KEY = 'jp_stats_v1';
+      const THEME_KEY = 'jp_theme_v1';
 
-      let currentVerse = null; // 儲存當前經文
+      let currentVerse = null;
+      let currentIndex = null;
 
-      // Toast 提示函數
+      // ===== 主題切換功能 =====
+      function initTheme() {
+        const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+      }
+
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem(THEME_KEY, newTheme);
+        updateThemeIcon(newTheme);
+        showToast(newTheme === 'dark' ? '🌙 已切換至深色模式' : '☀️ 已切換至淺色模式');
+      }
+
+      function updateThemeIcon(theme) {
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+      }
+
+      // ===== 統計功能 =====
+      function getStats() {
+        try {
+          const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '{}');
+          return {
+            lastReadDate: stats.lastReadDate || null,
+            streak: stats.streak || 0,
+            totalDays: stats.totalDays || 0,
+            readDates: stats.readDates || []
+          };
+        } catch (e) {
+          return { lastReadDate: null, streak: 0, totalDays: 0, readDates: [] };
+        }
+      }
+
+      function updateStats() {
+        const today = todayString();
+        let stats = getStats();
+
+        // 如果今天已經讀過，不重複計算
+        if (stats.lastReadDate === today) {
+          return stats;
+        }
+
+        const yesterday = todayString(-1);
+
+        // 更新連續天數
+        if (stats.lastReadDate === yesterday) {
+          stats.streak += 1;
+        } else if (stats.lastReadDate !== today) {
+          stats.streak = 1;
+        }
+
+        // 更新總天數
+        if (!stats.readDates.includes(today)) {
+          stats.readDates.push(today);
+          stats.totalDays = stats.readDates.length;
+        }
+
+        stats.lastReadDate = today;
+
+        // 保存
+        try {
+          localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+        } catch (e) {
+          console.warn('無法儲存統計', e);
+        }
+
+        return stats;
+      }
+
+      function displayStats() {
+        const stats = getStats();
+        const favorites = getFavorites();
+
+        document.getElementById('streakDays').textContent = stats.streak;
+        document.getElementById('totalDays').textContent = stats.totalDays;
+        document.getElementById('favoriteCount').textContent = favorites.length;
+        document.getElementById('streakBadge').textContent = stats.streak;
+
+        statsPanel.style.display = 'block';
+      }
+
+      // ===== 收藏功能 =====
+      function getFavorites() {
+        try {
+          return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveFavorites(favorites) {
+        try {
+          localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+        } catch (e) {
+          console.warn('無法儲存收藏', e);
+        }
+      }
+
+      function isFavorite(index) {
+        const favorites = getFavorites();
+        return favorites.some(f => f.index === index);
+      }
+
+      function toggleFavorite() {
+        if (currentIndex === null) return;
+
+        const favorites = getFavorites();
+        const existingIndex = favorites.findIndex(f => f.index === currentIndex);
+
+        if (existingIndex >= 0) {
+          // 移除收藏
+          favorites.splice(existingIndex, 1);
+          favoriteBtn.textContent = '🤍';
+          favoriteBtn.classList.remove('active');
+          showToast('💔 已取消收藏');
+        } else {
+          // 添加收藏
+          favorites.push({
+            index: currentIndex,
+            text: currentVerse.text,
+            ref: currentVerse.ref,
+            date: todayString(),
+            ts: Date.now()
+          });
+          favoriteBtn.textContent = '❤️';
+          favoriteBtn.classList.add('active');
+          showToast('❤️ 已加入收藏');
+        }
+
+        saveFavorites(favorites);
+        updateFavoriteButton();
+      }
+
+      function updateFavoriteButton() {
+        if (currentIndex !== null && isFavorite(currentIndex)) {
+          favoriteBtn.textContent = '❤️';
+          favoriteBtn.classList.add('active');
+        } else {
+          favoriteBtn.textContent = '🤍';
+          favoriteBtn.classList.remove('active');
+        }
+      }
+
+      function displayFavorites() {
+        const favorites = getFavorites();
+        const favoritesList = document.getElementById('favoritesList');
+        favoritesList.innerHTML = '';
+
+        if (!favorites.length) {
+          favoritesList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">⭐</div>
+              <div class="empty-state-text">還沒有收藏任何經文<br>點擊經文右上角的 ❤️ 來收藏</div>
+            </div>
+          `;
+        } else {
+          favorites.reverse().forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'favorite-item';
+            div.innerHTML = `
+              <button class="remove-favorite" data-index="${item.index}">❌</button>
+              <div class="favorite-meta">⭐ ${item.ref} · ${formatDate(item.date)}</div>
+              <div class="favorite-text">${escapeHtml(item.text)}</div>
+            `;
+            favoritesList.appendChild(div);
+          });
+
+          // 綁定移除事件
+          document.querySelectorAll('.remove-favorite').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const index = parseInt(e.target.dataset.index);
+              removeFavorite(index);
+            });
+          });
+        }
+
+        favoritesPanel.style.display = 'block';
+      }
+
+      function removeFavorite(index) {
+        if (!confirm('確定要移除此收藏？')) return;
+
+        let favorites = getFavorites();
+        favorites = favorites.filter(f => f.index !== index);
+        saveFavorites(favorites);
+        displayFavorites();
+        updateFavoriteButton();
+        showToast('🗑️ 已移除收藏');
+      }
+
+      function exportFavoritesText() {
+        const favorites = getFavorites();
+        if (!favorites.length) {
+          showToast('⚠️ 沒有收藏可匯出');
+          return;
+        }
+
+        let text = '=== 我的收藏 ===\n\n';
+        favorites.forEach((f, idx) => {
+          text += `【${f.ref}】\n${f.text}\n\n`;
+        });
+
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `我的收藏_${todayString()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast('✅ 已下載收藏');
+      }
+
+      // ===== Toast 提示 =====
       function showToast(message) {
         toast.textContent = message;
         toast.classList.add('show');
@@ -590,7 +1141,7 @@
         }, 2500);
       }
 
-      // 設備指紋生成
+      // ===== 設備指紋生成 =====
       function getDeviceFingerprint() {
         const keys = [
           navigator.platform,
@@ -608,7 +1159,7 @@
         return Math.abs(hash).toString(36).slice(0, 10);
       }
 
-      // 取得 YYYYMMDD 格式日期
+      // ===== 日期處理 =====
       function todayString(offsetDays = 0) {
         const d = new Date();
         d.setDate(d.getDate() + offsetDays);
@@ -618,11 +1169,14 @@
         return `${year}${month}${day}`;
       }
 
-      // 生成今日唯一索引
+      function formatDate(dateStr) {
+        return `${dateStr.slice(0, 4)}/${dateStr.slice(4, 6)}/${dateStr.slice(6, 8)}`;
+      }
+
+      // ===== 每日索引 =====
       function getDailyIndex() {
         const todayKey = todayString();
 
-        // 檢查 localStorage 是否已有當日索引
         try {
           const stored = JSON.parse(localStorage.getItem(TODAY_KEY) || 'null');
           if (stored && stored.date === todayKey) {
@@ -632,7 +1186,6 @@
           console.warn('讀取今日索引失敗', e);
         }
 
-        // 生成新的索引
         const dateSeed = todayKey;
         const deviceId = getDeviceFingerprint();
         const seed = deviceId + dateSeed;
@@ -644,7 +1197,6 @@
         }
         index = Math.abs(index) % verses.length;
 
-        // 儲存當日索引
         try {
           localStorage.setItem(TODAY_KEY, JSON.stringify({
             date: todayKey,
@@ -657,7 +1209,7 @@
         return index;
       }
 
-      // 儲存歷史紀錄
+      // ===== 歷史紀錄 =====
       function saveToHistory(index) {
         const date = todayString();
         let history = [];
@@ -668,7 +1220,6 @@
           history = [];
         }
 
-        // 避免同一天重複推入
         const last = history.length > 0 ? history[history.length - 1] : null;
         if (last && last.date === date && last.index === index) {
           return;
@@ -684,7 +1235,6 @@
 
         history.push(record);
 
-        // 保留最近 60 筆紀錄
         if (history.length > 60) {
           history = history.slice(history.length - 60);
         }
@@ -696,7 +1246,6 @@
         }
       }
 
-      // 取得最近 7 天的紀錄
       function getWeeklyHistory() {
         let history = [];
         try {
@@ -719,29 +1268,33 @@
         return result;
       }
 
-      // 匯出文字
       function exportHistoryText() {
         const week = getWeeklyHistory();
         if (!week.length) return '本週沒有紀錄。';
 
         let text = '=== 本週天父的話回顧 ===\n\n';
         week.forEach((r, idx) => {
-          const dateStr = `${r.date.slice(0, 4)}/${r.date.slice(4, 6)}/${r.date.slice(6, 8)}`;
+          const dateStr = formatDate(r.date);
           text += `【${dateStr}】 ${r.ref}\n${r.text}\n\n`;
         });
         return text;
       }
 
-      // 顯示本週回顧
       function showWeeklyReview() {
         const week = getWeeklyHistory();
+        const reviewList = document.getElementById('reviewList');
         reviewList.innerHTML = '';
 
         if (!week.length) {
-          reviewList.innerHTML = '<p style="color:#718096; text-align:center; padding: 20px;">本週尚無紀錄</p>';
+          reviewList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📖</div>
+              <div class="empty-state-text">本週尚無閱讀紀錄</div>
+            </div>
+          `;
         } else {
           week.forEach(item => {
-            const dateStr = `${item.date.slice(0, 4)}/${item.date.slice(4, 6)}/${item.date.slice(6, 8)}`;
+            const dateStr = formatDate(item.date);
             const div = document.createElement('div');
             div.className = 'review-item';
             div.innerHTML = `
@@ -754,7 +1307,6 @@
         reviewPanel.style.display = 'block';
       }
 
-      // 清除歷史
       function clearHistory() {
         if (!confirm('確定要清除所有本機紀錄？此動作無法復原。')) return;
 
@@ -769,14 +1321,14 @@
         }
       }
 
-      // 防 XSS 的 HTML 轉義
+      // ===== HTML 轉義 =====
       function escapeHtml(str) {
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
       }
 
-      // 書信式排版處理
+      // ===== 書信排版 =====
       function formatLetterText(text) {
         let salutation = '';
         let content = text;
@@ -790,20 +1342,16 @@
           }
         }
 
-        return {
-          salutation: salutation,
-          content: content
-        };
+        return { salutation, content };
       }
 
-      // 鋼筆逐字動畫
+      // ===== 鋼筆動畫 =====
       function animateLetterWriting(element, text) {
         element.innerHTML = '';
 
         const formatted = formatLetterText(text);
         let totalDelay = 0;
 
-        // 稱呼部分
         if (formatted.salutation) {
           const salutationDiv = document.createElement('div');
           salutationDiv.className = 'salutation';
@@ -823,7 +1371,6 @@
           totalDelay = formatted.salutation.length * 100;
         }
 
-        // 內容部分
         const contentDiv = document.createElement('div');
         contentDiv.className = 'content';
         element.appendChild(contentDiv);
@@ -849,7 +1396,7 @@
         return totalDelay + (charIndex * 100);
       }
 
-      // 顯示經文
+      // ===== 顯示經文 =====
       function showVerse(forcedIndex = null) {
         try {
           if (nfcPanel) nfcPanel.style.display = 'none';
@@ -857,7 +1404,8 @@
           verseBox.style.display = 'none';
 
           const index = forcedIndex !== null ? forcedIndex : getDailyIndex();
-          currentVerse = verses[index]; // 儲存當前經文
+          currentIndex = index;
+          currentVerse = verses[index];
 
           const verseElement = document.getElementById('verse');
           const refElement = document.getElementById('reference');
@@ -865,6 +1413,9 @@
           verseElement.innerHTML = '';
           refElement.textContent = '';
           refElement.style.opacity = '0';
+
+          // 更新收藏按鈕
+          updateFavoriteButton();
 
           // 設置分享連結
           const shareText = encodeURIComponent(
@@ -875,17 +1426,17 @@
           document.getElementById('share-fb').href =
             `https://www.facebook.com/sharer/sharer.php?quote=${shareText}`;
 
-          // 顯示容器並開始動畫
           setTimeout(() => {
             loader.style.display = 'none';
             verseBox.style.display = 'block';
 
             const animationDuration = animateLetterWriting(verseElement, currentVerse.text);
 
-            // 儲存到歷史
+            // 儲存歷史和更新統計
             saveToHistory(index);
+            const stats = updateStats();
+            document.getElementById('streakBadge').textContent = stats.streak;
 
-            // 延遲顯示出處和分享按鈕
             setTimeout(() => {
               refElement.textContent = currentVerse.ref;
               refElement.style.animation = 'fadeIn 0.5s ease-out forwards';
@@ -899,7 +1450,7 @@
         }
       }
 
-      // 複製經文功能
+      // ===== 複製功能 =====
       copyBtn.addEventListener('click', async () => {
         if (!currentVerse) return;
 
@@ -910,7 +1461,6 @@
             await navigator.clipboard.writeText(textToCopy);
             showToast('✅ 已複製到剪貼簿');
           } else {
-            // 降級方案
             const textarea = document.createElement('textarea');
             textarea.value = textToCopy;
             textarea.style.position = 'fixed';
@@ -927,12 +1477,11 @@
         }
       });
 
-      // 跳過 NFC 按鈕
+      // ===== NFC 相關 =====
       skipNfcBtn.addEventListener('click', () => {
         showVerse();
       });
 
-      // Android NFC 初始化（修正卡住問題）
       function initNFC() {
         if (!isAndroid) {
           showVerse();
@@ -949,7 +1498,6 @@
         let nfcTimeout;
         let alreadyRead = false;
 
-        // 設定超時自動顯示（縮短為 3 秒）
         nfcTimeout = setTimeout(() => {
           if (!alreadyRead) {
             nfcError.textContent = '⏱️ 掃描超時，自動顯示經文';
@@ -984,7 +1532,6 @@
             clearTimeout(nfcTimeout);
             console.error("NFC 啟動錯誤:", err);
 
-            // 更友善的錯誤訊息
             if (err.name === 'NotAllowedError') {
               nfcError.textContent = '⚠️ 請允許 NFC 權限';
             } else if (err.name === 'NotSupportedError') {
@@ -997,52 +1544,26 @@
           });
       }
 
-      // 檢測是否由 NFC 標籤直接啟動（Android 特有行為）
       function isLaunchedByNFC() {
-        // Android 通過 NFC 標籤啟動時,通常沒有 referrer
-        // 且是直接導航(非刷新、非後退)
         const hasNoReferrer = !document.referrer || document.referrer === '';
         const isDirectNavigation = window.performance &&
           (window.performance.navigation.type === 0 ||
             window.performance.getEntriesByType('navigation')[0]?.type === 'navigate');
 
-        // 如果是 Android 且沒有 referrer 且是直接導航,很可能是 NFC 啟動
         return isAndroid && hasNoReferrer && isDirectNavigation;
       }
 
-      // 初始化邏輯
-      if (isAndroid) {
-        // 檢測是否由 NFC 標籤直接啟動
-        if (isLaunchedByNFC()) {
-          console.log('檢測到可能由 NFC 標籤啟動,直接顯示經文');
-          // 直接顯示經文,不顯示 NFC 掃描畫面
-          showVerse();
-        } else {
-          // 手動打開網頁,顯示 NFC 掃描介面
-          try {
-            if ('NDEFReader' in window) {
-              nfcPanel.style.display = 'flex';
-              verseBox.style.display = 'none';
-              initNFC();
-            } else {
-              // 不支援 NFC,直接顯示經文
-              showVerse();
-            }
-          } catch (err) {
-            console.warn("NFC 初始化失敗:", err);
-            showVerse();
-          }
-        }
-      } else {
-        // 非 Android 裝置,直接顯示經文
-        showVerse();
-      }
-
-      // 回顧面板事件
+      // ===== 事件綁定 =====
+      themeToggle.addEventListener('click', toggleTheme);
+      statsBtn.addEventListener('click', displayStats);
+      favoritesBtn.addEventListener('click', displayFavorites);
       openReviewBtn.addEventListener('click', showWeeklyReview);
-      closeReviewBtn.addEventListener('click', () => {
-        reviewPanel.style.display = 'none';
-      });
+      favoriteBtn.addEventListener('click', toggleFavorite);
+
+      closeStats.addEventListener('click', () => { statsPanel.style.display = 'none'; });
+      closeFavorites.addEventListener('click', () => { favoritesPanel.style.display = 'none'; });
+      closeReviewBtn.addEventListener('click', () => { reviewPanel.style.display = 'none'; });
+
       clearBtn.addEventListener('click', clearHistory);
       exportBtn.addEventListener('click', () => {
         const txt = exportHistoryText();
@@ -1058,12 +1579,41 @@
         showToast('✅ 已下載文字檔');
       });
 
-      // 點擊面板外部關閉回顧面板
-      reviewPanel.addEventListener('click', (e) => {
-        if (e.target === reviewPanel) {
-          reviewPanel.style.display = 'none';
-        }
+      exportFavorites.addEventListener('click', exportFavoritesText);
+
+      // 點擊面板外部關閉
+      [statsPanel, favoritesPanel, reviewPanel].forEach(panel => {
+        panel.addEventListener('click', (e) => {
+          if (e.target === panel) {
+            panel.style.display = 'none';
+          }
+        });
       });
+
+      // ===== 初始化 =====
+      initTheme();
+
+      if (isAndroid) {
+        if (isLaunchedByNFC()) {
+          console.log('檢測到可能由 NFC 標籤啟動,直接顯示經文');
+          showVerse();
+        } else {
+          try {
+            if ('NDEFReader' in window) {
+              nfcPanel.style.display = 'flex';
+              verseBox.style.display = 'none';
+              initNFC();
+            } else {
+              showVerse();
+            }
+          } catch (err) {
+            console.warn("NFC 初始化失敗:", err);
+            showVerse();
+          }
+        }
+      } else {
+        showVerse();
+      }
     });
   </script>
 </body>
