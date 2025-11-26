@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Iansui&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
     rel="stylesheet">
+  <link rel="stylesheet" href="prayer-room-styles.css">
 
   <style>
     * {
@@ -334,7 +335,8 @@
       animation: fadeIn 0.5s ease-out forwards;
     }
 
-    .share-buttons a {
+    .share-buttons a,
+    .share-buttons button {
       background: var(--accent-gradient);
       color: white;
       padding: 8px 16px;
@@ -348,7 +350,8 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
-    .share-buttons a:hover {
+    .share-buttons a:hover,
+    .share-buttons button:hover {
       transform: translateY(-2px);
       box-shadow: var(--button-hover-shadow);
     }
@@ -771,6 +774,7 @@
     <div class="share-buttons">
       <a href="#" id="share-line" target="_blank">📱 LINE</a>
       <a href="#" id="share-fb" target="_blank">📘 Facebook</a>
+      <button id="prayerRoomBtn">🕊️ 禱告房</button>
     </div>
   </div>
 
@@ -810,7 +814,7 @@
   </div>
 
   <div class="panel" id="reviewPanel">
-    <h3>📖 本週回顧（最近 7 天）</h3>
+    <h3>📖 本週回顧(最近 7 天)</h3>
     <div id="reviewList"></div>
     <div class="panel-actions">
       <button class="small-btn" id="exportBtn">💾 匯出文字</button>
@@ -820,6 +824,49 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- 禱告房 -->
+  <div class="prayer-room" id="prayerRoom">
+    <div class="stars" id="stars"></div>
+    <div class="prayer-content">
+      <button class="prayer-close" id="closePrayer">✕</button>
+
+      <h2 class="prayer-title">🕊️ 禱告房 🕊️</h2>
+      <p class="prayer-subtitle">在這裡,與神親近</p>
+
+      <div class="candles-container">
+        <div class="candle">
+          <div class="flame"></div>
+        </div>
+        <div class="candle">
+          <div class="flame"></div>
+        </div>
+        <div class="candle">
+          <div class="flame"></div>
+        </div>
+      </div>
+
+      <div class="prayer-verse" id="prayerVerse">
+        你們要休息,要知道我是神!<br>
+        我必在外邦中被尊崇,在遍地上也被尊崇。<br>
+        <br>
+        <span style="opacity: 0.7; font-size: 0.9rem;">— 詩篇 46:10</span>
+      </div>
+
+      <div class="music-control">
+        <button class="music-btn" id="playPauseBtn">▶️</button>
+        <div class="music-info" id="musicInfo">點擊播放音樂</div>
+        <div class="volume-control">
+          <span style="opacity: 0.7;">🔊</span>
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+        </div>
+      </div>
+    </div>
+
+    <audio id="prayerMusic" loop>
+      <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+  </div>
 
   <script type="module">
     import verses from './verses.js';
@@ -853,6 +900,16 @@
 
       const toast = document.getElementById('toast');
 
+      // 禱告房元素
+      const prayerRoom = document.getElementById('prayerRoom');
+      const prayerRoomBtn = document.getElementById('prayerRoomBtn');
+      const closePrayerBtn = document.getElementById('closePrayer');
+      const prayerMusic = document.getElementById('prayerMusic');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const volumeSlider = document.getElementById('volumeSlider');
+      const musicInfo = document.getElementById('musicInfo');
+      const starsContainer = document.getElementById('stars');
+
       const STORAGE_KEY = 'jp_history_v1';
       const TODAY_KEY = 'jp_today_index_v1';
       const FAVORITES_KEY = 'jp_favorites_v1';
@@ -868,6 +925,60 @@
         setTimeout(() => {
           toast.classList.remove('show');
         }, 2500);
+      }
+
+      // ===== 禱告房功能 =====
+      let isPlaying = false;
+
+      function createStars() {
+        starsContainer.innerHTML = '';
+        const starCount = 100;
+        for (let i = 0; i < starCount; i++) {
+          const star = document.createElement('div');
+          star.className = 'star';
+          star.style.left = Math.random() * 100 + '%';
+          star.style.top = Math.random() * 100 + '%';
+          star.style.animationDelay = Math.random() * 3 + 's';
+          starsContainer.appendChild(star);
+        }
+      }
+
+      function openPrayerRoom() {
+        prayerRoom.style.display = 'block';
+        createStars();
+        prayerMusic.volume = volumeSlider.value / 100;
+      }
+
+      function closePrayerRoom() {
+        prayerRoom.style.display = 'none';
+        if (isPlaying) {
+          prayerMusic.pause();
+          isPlaying = false;
+          playPauseBtn.textContent = '▶️';
+          musicInfo.textContent = '點擊播放音樂';
+        }
+      }
+
+      function toggleMusic() {
+        if (isPlaying) {
+          prayerMusic.pause();
+          playPauseBtn.textContent = '▶️';
+          musicInfo.textContent = '已暫停';
+          isPlaying = false;
+        } else {
+          prayerMusic.play().then(() => {
+            playPauseBtn.textContent = '⏸️';
+            musicInfo.textContent = '正在播放...';
+            isPlaying = true;
+          }).catch(err => {
+            console.error('播放失敗:', err);
+            musicInfo.textContent = '播放失敗';
+          });
+        }
+      }
+
+      function updateVolume() {
+        prayerMusic.volume = volumeSlider.value / 100;
       }
 
       function initTheme() {
@@ -1042,7 +1153,7 @@
       }
 
       function removeFavorite(index) {
-        if (!confirm('確定要移除此收藏？')) return;
+        if (!confirm('確定要移除此收藏?')) return;
 
         let favorites = getFavorites();
         favorites = favorites.filter(f => f.index !== index);
@@ -1239,7 +1350,7 @@
       }
 
       function clearHistory() {
-        if (!confirm('確定要清除所有本機紀錄？此動作無法復原。')) return;
+        if (!confirm('確定要清除所有本機紀錄?此動作無法復原。')) return;
 
         try {
           localStorage.removeItem(STORAGE_KEY);
@@ -1262,10 +1373,10 @@
         let salutation = '';
         let content = text;
 
-        const greetings = ['親愛的孩子，', '親愛的孩子：', '孩子，', '孩子：'];
+        const greetings = ['親愛的孩子,', '親愛的孩子:', '孩子,', '孩子:'];
         for (const greeting of greetings) {
           if (text.startsWith(greeting)) {
-            salutation = greeting.endsWith('：') ? greeting : greeting.replace('，', '：');
+            salutation = greeting.endsWith(':') ? greeting : greeting.replace(',', ':');
             content = text.slice(greeting.length);
             break;
           }
@@ -1369,7 +1480,7 @@
           }, 300);
         } catch (error) {
           console.error("顯示經文時出錯:", error);
-          loader.textContent = "載入失敗，請重新整理頁面";
+          loader.textContent = "載入失敗,請重新整理頁面";
           verseBox.style.display = 'none';
         }
       }
@@ -1396,7 +1507,7 @@
 
         nfcTimeout = setTimeout(() => {
           if (!alreadyRead) {
-            nfcError.textContent = '⏱️ 掃描超時，自動顯示經文';
+            nfcError.textContent = '⏱️ 掃描超時,自動顯示經文';
             setTimeout(showVerse, 1000);
           }
         }, 3000);
@@ -1420,7 +1531,7 @@
 
               clearTimeout(nfcTimeout);
               console.error('NFC 讀取錯誤:', error);
-              nfcError.textContent = '❌ 讀取失敗，請重試';
+              nfcError.textContent = '❌ 讀取失敗,請重試';
               setTimeout(showVerse, 1500);
             });
           })
@@ -1475,6 +1586,22 @@
       });
 
       exportFavorites.addEventListener('click', exportFavoritesText);
+
+      // 禱告房事件監聽
+      prayerRoomBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPrayerRoom();
+      });
+
+      closePrayerBtn.addEventListener('click', closePrayerRoom);
+      playPauseBtn.addEventListener('click', toggleMusic);
+      volumeSlider.addEventListener('input', updateVolume);
+
+      prayerRoom.addEventListener('click', (e) => {
+        if (e.target === prayerRoom) {
+          closePrayerRoom();
+        }
+      });
 
       [statsPanel, favoritesPanel, reviewPanel].forEach(panel => {
         panel.addEventListener('click', (e) => {
